@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+import rospy
+import RPi.GPIO as GPIO
+import time
+from sensor_msgs.msg import JointState
+
+pos = []
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+
+servo_1_Pin = 40
+servo_2_Pin = 37
+servo_3_Pin = 38
+servo_4_Pin = 36
+servo_5_Pin = 35
+servo_6_Pin = 33
+
+GPIO.setup(servo_1_Pin,GPIO.OUT)
+GPIO.setup(servo_2_Pin,GPIO.OUT)
+GPIO.setup(servo_3_Pin,GPIO.OUT)
+GPIO.setup(servo_4_Pin,GPIO.OUT)
+GPIO.setup(servo_5_Pin,GPIO.OUT)
+GPIO.setup(servo_6_Pin,GPIO.OUT)
+
+pwm_1=GPIO.PWM(servo_1_Pin,50)
+pwm_2=GPIO.PWM(servo_2_Pin,50)
+pwm_3=GPIO.PWM(servo_3_Pin,50)
+pwm_4=GPIO.PWM(servo_4_Pin,50)
+pwm_5=GPIO.PWM(servo_5_Pin,50)
+pwm_6=GPIO.PWM(servo_6_Pin,50)
+
+pwm_1.start(0)
+pwm_2.start(0)
+pwm_3.start(0)
+pwm_4.start(0)
+pwm_5.start(0)
+pwm_6.start(0)
+
+def program():
+    def r2d(join, radianAngle):
+        if join == 2:
+            radianAngle = radianAngle + 1.57
+            return radianAngle * 180 / 3.142
+        elif join == 3:
+            radianAngle = radianAngle + 1.57
+            return radianAngle * 180 / 3.142
+        elif join == 5:
+            radianAngle = radianAngle - 2.36
+            return radianAngle * 180 / 3.142
+        else:
+            return radianAngle * 180 / 3.142
+
+
+    def validAngle(join, degreeAngle):
+        if join == 1:
+            if degreeAngle < 1:
+                degreeAngle = 0
+                return degreeAngle
+            if degreeAngle > 180:
+                degreeAngle = 180
+                return degreeAngle
+        elif join == 2:
+            if degreeAngle < 1:
+                degreeAngle = 0
+                return degreeAngle
+            if degreeAngle > 180:
+                degreeAngle = 180
+                return degreeAngle
+                degreeAngle = 180
+                return degreeAngle
+        elif join == 3:
+            if degreeAngle < 15:
+                degreeAngle = 15
+                return degreeAngle
+            if degreeAngle > 180:
+                return 180
+        elif join == 4:
+            if degreeAngle < 10:
+                degreeAngle = 10
+                return degreeAngle
+            if degreeAngle > 180:
+                degreeAngle = 180
+                return degreeAngle
+        elif join == 5:
+            if degreeAngle < 1:
+                degreeAngle = 0
+                return degreeAngle
+            if degreeAngle > 170:
+                return 170
+        elif join == 6:
+            if degreeAngle < 1:
+                degreeAngle = 0
+                return degreeAngle
+            if degreeAngle > 180:
+                degreeAngle = 180
+                return degreeAngle
+        return degreeAngle
+    
+    desiredAngle_1 = validAngle(1, r2d(1,  pos[0]))
+    desiredAngle_2 = validAngle(2, r2d(2,  pos[1]))
+    desiredAngle_3 = validAngle(3, r2d(3,  pos[2]))
+    desiredAngle_4 = validAngle(4, r2d(4,  pos[3]))
+    desiredAngle_5 = validAngle(5, r2d(5,  pos[4]))
+    desiredAngle_6 = validAngle(6, r2d(6,  pos[5]))
+    
+    print(desiredAngle_1)
+    print(desiredAngle_2)
+    print(desiredAngle_3)
+    print(desiredAngle_4)
+    print(desiredAngle_5)
+    print(desiredAngle_6)
+    
+    DC_1 = 1./18.*(desiredAngle_1)+2
+    pwm_1.ChangeDutyCycle(DC_1)
+    time.sleep(0.5)
+    
+    DC_2 = 1./18.*(desiredAngle_2)+2
+    pwm_2.ChangeDutyCycle(DC_2)
+    time.sleep(0.5)
+    
+    DC_3 = 1./18.*(desiredAngle_3)+2
+    pwm_3.ChangeDutyCycle(DC_3)
+    time.sleep(0.5)
+    
+    DC_4 = 1./18.*(desiredAngle_4)+2
+    pwm_4.ChangeDutyCycle(DC_4)
+    time.sleep(0.5)
+    
+    DC_5 = 1./18.*(desiredAngle_5)+2
+    pwm_5.ChangeDutyCycle(DC_5)
+    time.sleep(0.5)
+    
+    DC_6 = 1./18.*(desiredAngle_6)+2
+    pwm_6.ChangeDutyCycle(DC_6)
+    time.sleep(0.5)
+    
+    #pwm_1.stop()
+    #pwm_2.stop()
+    #pwm_3.stop()
+    #pwm_4.stop()
+    #pwm_5.stop()
+    #pwm_6.stop()
+    #rospy.spin()
+    #GPIO.cleanup()
+    
+#-- END PROGRAM--
+
+def joint_states_callback(message):
+    # filter out joint0 position:
+    #rospy.Subscriber("joint_states", JointState, joint_states_callback)
+    for i,name in enumerate(message.name):
+    	pos.append(message.position[i])
+    program()	
+    return
+
+#if name == 'main':
+while not rospy.is_shutdown():
+    rospy.init_node("rasp_sub")
+    rospy.Subscriber("joint_states", JointState, joint_states_callback)
+    #r = rospy.Rate(5)
+    #r.sleep()
+    rospy.spin()
+print('Fim do programa')
